@@ -17,7 +17,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.airlift.log.Logger;
 import io.trino.hdfs.HdfsEnvironment;
-import io.trino.plugin.hive.HiveStorageFormat;
 import io.trino.plugin.hive.HiveType;
 import io.trino.plugin.hive.PartitionStatistics;
 import io.trino.plugin.hive.metastore.Column;
@@ -29,6 +28,8 @@ import io.trino.plugin.hive.metastore.StorageFormat;
 import io.trino.plugin.hive.metastore.Table;
 import io.trino.testing.QueryRunner;
 import org.apache.hadoop.hive.metastore.TableType;
+import org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat;
+import org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe;
 import org.apache.hudi.common.model.HoodieTableType;
 
 import java.io.File;
@@ -51,6 +52,7 @@ import static io.trino.plugin.hive.HiveType.HIVE_DOUBLE;
 import static io.trino.plugin.hive.HiveType.HIVE_INT;
 import static io.trino.plugin.hive.HiveType.HIVE_LONG;
 import static io.trino.plugin.hive.HiveType.HIVE_STRING;
+import static io.trino.plugin.hive.util.HiveUtil.HUDI_PARQUET_INPUT_FORMAT;
 import static org.apache.hudi.common.model.HoodieTableType.COPY_ON_WRITE;
 import static org.apache.hudi.common.model.HoodieTableType.MERGE_ON_READ;
 
@@ -94,7 +96,10 @@ public class ResourceHudiTablesInitializer
             List<Column> partitionColumns,
             Map<String, String> partitions)
     {
-        StorageFormat storageFormat = StorageFormat.fromHiveStorageFormat(HiveStorageFormat.PARQUET);
+        StorageFormat storageFormat = StorageFormat.create(
+                ParquetHiveSerDe.class.getName(),
+                HUDI_PARQUET_INPUT_FORMAT,
+                MapredParquetOutputFormat.class.getName());
 
         Table table = Table.builder()
                 .setDatabaseName(schemaName)
